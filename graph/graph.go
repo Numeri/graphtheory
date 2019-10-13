@@ -7,7 +7,7 @@ import (
 
 type Graph struct {
 	Size uint8
-	Adj mat.Symmetric
+	Adj  mat.Symmetric
 }
 
 type Edge struct {
@@ -16,13 +16,13 @@ type Edge struct {
 
 type Vertex = uint8
 
-func (g Graph) String() string {
-	fa := mat.Formatted(g.Adj, mat.Prefix(""), mat.Squeeze())
-	return fmt.Sprintf("\n%v\n", fa)
+func NewGraph(size uint8) Graph {
+	return Graph{size, mat.NewSymDense(int(size), nil)}
 }
 
-func NewGraph(size uint8) Graph {
-		return Graph{size, mat.NewSymDense(int(size), nil)}
+func (g Graph) String() string {
+	fa := mat.Formatted(g.Adj, mat.Prefix(""), mat.Squeeze())
+	return fmt.Sprintf("%v", fa)
 }
 
 func (g Graph) AddEdge(e Edge) Graph {
@@ -43,4 +43,3 @@ func (g Graph) AddEdges(edges []Edge) Graph {
 
 	return Graph{g.Size, adj}
 }
-
