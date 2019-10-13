@@ -1,13 +1,16 @@
 package graph
 
-import "sort"
+import (
+	"gonum.org/v1/gonum/mat"
+	"sort"
+)
 
 func (g Graph) NumEdges() uint {
-	result := uint(0);
+	result := uint(0)
 
 	for i := 0; i < int(g.Size); i++ {
-		for j := i+1; j < int(g.Size); j++ {
-			result += uint(g.Adj.At(i,j))
+		for j := i + 1; j < int(g.Size); j++ {
+			result += uint(g.Adj.At(i, j))
 		}
 	}
 
@@ -19,11 +22,11 @@ func (g Graph) DegreeSequence() []uint {
 
 	for i := 0; i < int(g.Size); i++ {
 		for j := 0; j < int(g.Size); j++ {
-			result[i] += uint(g.Adj.At(i,j))
+			result[i] += uint(g.Adj.At(i, j))
 		}
 	}
 
-	sort.Slice(result, func(i, j int) bool {return result[i] > result[j]})
+	sort.Slice(result, func(i, j int) bool { return result[i] > result[j] })
 	return result
 }
 
@@ -31,7 +34,7 @@ func (g Graph) AdjecentVertices(v Vertex) []Vertex {
 	result := make([]Vertex, 0)
 
 	for i := 0; i < int(g.Size); i++ {
-		if g.Adj.At(i,int(v)) == 1 {
+		if g.Adj.At(i, int(v)) == 1 {
 			result = append(result, uint8(i))
 		}
 	}
@@ -47,7 +50,7 @@ func (g Graph) VerticesConnected(u, v Vertex) bool {
 	visited := make([]bool, g.Size)
 	ch := make(chan bool)
 	go g.verticesConnected_(ch, u, v, visited)
-	return <- ch
+	return <-ch
 }
 
 func (g Graph) verticesConnected_(ch chan bool, u, v Vertex, visited []bool) {
@@ -85,3 +88,37 @@ func (g Graph) verticesConnected_(ch chan bool, u, v Vertex, visited []bool) {
 	ch <- false
 }
 
+func (g Graph) ConnectivityGraph() Graph {
+	cg := mat.NewSymDense(int(g.Size), nil)
+	cg.CopySym(g.Adj)
+
+	for i := 0; i < int(g.Size); i++ {
+		neighbours := make([]int, 0, g.Size)
+
+		for j := 0; j < int(g.Size); j++ {
+			if cg.At(i, j) == 1 {
+				neighbours = append(neighbours, j)
+			}
+		}
+
+		for n := range neighbours {
+			for m := n + 1; m < len(neighbours); m++ {
+				cg.SetSym(neighbours[n], neighbours[m], 1)
+			}
+		}
+	}
+
+	return Graph{g.Size, cg}
+}
+
+func (g Graph) IsConnected() bool {
+	cg := g.ConnectivityGraph()
+
+	for i := 1; i < int(g.Size); i++ {
+		if cg.Adj.At(0, i) == 0 {
+			return false
+		}
+	}
+
+	return true
+}
