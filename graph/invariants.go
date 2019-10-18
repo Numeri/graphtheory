@@ -122,3 +122,17 @@ func (g Graph) IsConnected() bool {
 
 	return true
 }
+
+func (g Graph) Complement() Graph {
+	comp_adj := mat.NewSymDense(int(g.Size), nil)
+
+	for i := 0; i < int(g.Size); i++ {
+		for j := i + 1; j < int(g.Size); j++ {
+			if g.Adj.At(i, j) == 0 {
+				comp_adj.SetSym(i, j, 1)
+			}
+		}
+	}
+
+	return Graph{g.Size, comp_adj}
+}
