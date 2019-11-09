@@ -5,9 +5,6 @@ import (
 	"sync/atomic"
 )
 
-type empty = struct{}
-type semaphore = chan empty
-
 func findAllConnectedNGraphs() {
 	connected := uint64(0)
 	nonconnected := uint64(0)
