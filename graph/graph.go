@@ -16,6 +16,10 @@ type Edge struct {
 
 type Vertex = uint8
 
+func (e Edge) Equal(e2 Edge) bool {
+	return (e.U == e2.U && e.V == e2.V) || (e.U == e2.V && e.V == e2.U)
+}
+
 func NewGraph(size uint8) Graph {
 	return Graph{size, mat.NewSymDense(int(size), nil)}
 }

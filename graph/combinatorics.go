@@ -59,10 +59,6 @@ func PowersetIth(n uint8, i uint64) []uint8 {
 func Factorial(n uint8) uint64 {
 	res := uint64(1)
 
-	//if n == 0 {
-	//	return 1
-	//}
-
 	switch n {
 	case 0:
 	case 1:
@@ -96,7 +92,6 @@ func Factorial(n uint8) uint64 {
 
 func PermutationIth(n uint8, i uint64) []uint8 {
 	j := i
-	m := n - 1
 	sym := make([]uint8, n)
 	for k := uint8(0); k < n; k++ {
 		sym[k] = k
@@ -104,20 +99,31 @@ func PermutationIth(n uint8, i uint64) []uint8 {
 
 	perm := make([]uint8, n)
 
-	//Nasty, but unsigned integers force us to it
-	for m+1 != 0 {
+	// Unfortuante that we can't include 0, but unsigned integers force us to it
+	for m := n - 1; m != 0; m-- {
 		f := Factorial(m)
 		div := j / f
 		perm[n-m-1] = sym[div]
 		sym = append(sym[:div], sym[div+1:]...)
 		j = j % f
-		m--
 	}
+
+	// This handles the last run through of the loop, where m is 0
+	f := Factorial(0)
+	div := j / f
+	perm[n-1] = sym[div]
+	sym = append(sym[:div], sym[div+1:]...)
+	j = j % f
 
 	return perm
 }
 
 func NumNGraphs(n uint8) uint64 {
+	// Number of ways to have no vertices is one
+	if n == 0 {
+		return 1
+	}
+
 	return 1 << (n * (n - 1) / 2)
 }
 

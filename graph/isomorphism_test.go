@@ -1,8 +1,11 @@
-package graph
+package graph_test
 
-import "testing"
+import (
+	"graphtheory/graph"
+	"testing"
+)
 
 func BenchmarkFilterNGraphIsos(b *testing.B) {
 	n := uint8(6)
-	FilterNGraphIsos(n)
+	graph.FilterNGraphIsos(n)
 }

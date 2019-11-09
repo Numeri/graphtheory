@@ -89,3 +89,54 @@ func FilterNGraphIsos(n uint8) []Graph {
 
 	return FilterIsosFunc(min, max, closure)
 }
+
+func FilterIsosConcurr(min, max uint64, f func(i uint64) Graph) []Graph {
+	isos := make([]Graph, 0, (max-min)/3)
+	isos_chan := make(chan Graph)
+	worker_chan := make(semaphore, 2)
+
+	for graph_i := min; graph_i < max; graph_i++ {
+		isos_len := uint64(len(isos))
+		groupFunc := func(isos_len uint64) func(i uint64) Graph {
+			return func(i uint64) Graph {
+				if i == isos_len {
+					return f(graph_i)
+				} else {
+					return isos[i]
+				}
+			}
+		}(isos_len)
+
+		go filterIsosConcurr_(min, isos_len+1, groupFunc, isos_chan, worker_chan)
+	}
+
+	for i := min; i < max; {
+		select {
+		case g := <-isos_chan:
+			isos = append(isos, g)
+		case <-worker_chan:
+			i++
+		}
+	}
+
+	return isos
+}
+
+func filterIsosConcurr_(min, max uint64, f func(i uint64) Graph, isos_chan chan Graph, worker_chan semaphore) {
+	g := f(max - 1)
+	isoFound := false
+
+	for i := min; i < max-1 && isoFound == false; i++ {
+		h := f(i)
+		isoFound = h.InvariantMatch(g)
+		if isoFound {
+			isoFound = h.BruteForceIsoCheck(g)
+		}
+	}
+
+	if isoFound == false {
+		isos_chan <- g
+	}
+
+	worker_chan <- empty{}
+}
