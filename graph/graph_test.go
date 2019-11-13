@@ -5,6 +5,21 @@ import (
 	"testing"
 )
 
+func TestEqual(t *testing.T) {
+	a := graph.Edge{0, 1}
+	b := graph.Edge{0, 1}
+	c := graph.Edge{1, 0}
+	d := graph.Edge{1, 2}
+
+	if !a.Equal(b) || !b.Equal(a) || !a.Equal(c) || !c.Equal(a) {
+		t.Errorf("Edge Equal: returned false for equivalent edges")
+	}
+
+	if d.Equal(a) || a.Equal(d) || d.Equal(c) || c.Equal(d) {
+		t.Errorf("Edge Equal: returned true for non-equivalent edges")
+	}
+}
+
 func TestNewGraph(t *testing.T) {
 	size := uint8(3)
 	g := graph.NewGraph(size)

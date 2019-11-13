@@ -1,15 +1,13 @@
 package graph
 
 import (
-	"fmt"
+	"sync"
 	"sync/atomic"
 )
 
-func findAllConnectedNGraphs() {
-	connected := uint64(0)
-	nonconnected := uint64(0)
-	n := uint8(7)
-	numNGraphs := NumNGraphs(n)
+func CountAllConnectedNGraphs(n uint8) (connected, nonconnected uint64) {
+	connected = 0
+	nonconnected = 0
 
 	f := func(g Graph) {
 		if g.IsConnected() {
@@ -17,34 +15,29 @@ func findAllConnectedNGraphs() {
 		} else {
 			atomic.AddUint64(&nonconnected, 1)
 		}
-		if (connected+nonconnected)%50000 == 0 {
-			fmt.Printf("%d/%d =\t%v\n", connected+nonconnected, numNGraphs, 100*float64(connected+nonconnected)/float64(numNGraphs))
-		}
 	}
 
-	ConcurrentNGraphs(n, f)
+	ConcurrentNGraphMap(n, f)
 
-	fmt.Println("Connected graphs:    ", connected)
-	fmt.Println("Nonconnected graphs: ", nonconnected)
-	fmt.Println("Total graphs:        ", connected+nonconnected)
-	fmt.Println("Total number n-graphs", numNGraphs)
+	return connected, nonconnected
 }
 
-func ConcurrentNGraphs(n uint8, f func(g Graph)) {
+func ConcurrentNGraphMap(n uint8, f func(g Graph)) {
 	numNGraphs := NumNGraphs(n)
 
-	sem := make(semaphore, 2000)
+	sem := make(semaphore, 100)
+	var wg sync.WaitGroup
 
 	for i := uint64(0); i < numNGraphs; i++ {
 		sem <- empty{}
+		wg.Add(1)
 		go func(i uint64) {
+			defer wg.Done()
 			g := AllNGraphsIth(n, i)
-
 			f(g)
 			<-sem
 		}(i)
 	}
 
-	for len(sem) != 0 {
-	}
+	wg.Wait()
 }
