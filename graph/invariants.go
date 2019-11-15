@@ -17,13 +17,21 @@ func (g Graph) NumEdges() uint {
 	return result
 }
 
+func (g Graph) Degree(v Vertex) uint {
+	result := uint(0)
+
+	for i := 0; i < int(g.Size); i++ {
+		result += uint(g.Adj.At(i, int(v)))
+	}
+
+	return result
+}
+
 func (g Graph) DegreeSequence() []uint {
 	result := make([]uint, g.Size)
 
 	for i := 0; i < int(g.Size); i++ {
-		for j := 0; j < int(g.Size); j++ {
-			result[i] += uint(g.Adj.At(i, j))
-		}
+		result[i] = g.Degree(Vertex(i))
 	}
 
 	sort.Slice(result, func(i, j int) bool { return result[i] > result[j] })
@@ -88,6 +96,60 @@ func (g Graph) verticesConnected_(ch chan bool, u, v Vertex, visited []bool) {
 	ch <- false
 }
 
+func (g Graph) Path(u, v Vertex) []Vertex {
+	if u == v {
+		return []Vertex{}
+	}
+
+	visited := make([]bool, g.Size)
+	path := make([]Vertex, 0, g.Size/2)
+	ch := make(chan []Vertex)
+
+	go g.path_(ch, u, v, visited, path)
+	return <-ch
+}
+
+func (g Graph) path_(ch chan []Vertex, u, v Vertex, visited []bool, path []Vertex) {
+	visited[int(u)] = true
+
+	path = append(path, u)
+
+	if g.Adj.At(int(u), int(v)) == 1 {
+		ch <- append(path, v)
+		return
+	}
+
+	neighbours := g.AdjecentVertices(u)
+
+	numGoroutines := 0
+	ch2 := make(chan []Vertex)
+
+	for _, n := range neighbours {
+		if !visited[int(n)] {
+			numGoroutines++
+			go g.path_(ch2, n, v, visited, path)
+		}
+	}
+
+	if numGoroutines == 0 {
+		ch <- []Vertex{}
+		return
+	}
+
+	shortestPath := []Vertex{}
+
+	for i := 0; i < numGoroutines; i++ {
+		returnedPath := <-ch2
+		if len(returnedPath) != 0 {
+			if len(shortestPath) != 0 || len(returnedPath) < len(shortestPath) {
+				shortestPath = returnedPath
+			}
+		}
+	}
+
+	ch <- shortestPath
+}
+
 func (g Graph) ConnectivityGraph() Graph {
 	cg := mat.NewSymDense(int(g.Size), nil)
 	cg.CopySym(g.Adj)
@@ -135,4 +197,34 @@ func (g Graph) Complement() Graph {
 	}
 
 	return Graph{g.Size, comp_adj}
+}
+
+func (g Graph) ConnectivityWeight(v Vertex) uint8 {
+	weight := uint8(0)
+
+	for i := 0; i < int(g.Size); i++ {
+		for j := i + 1; j < int(g.Size); j++ {
+			shortestPath := g.Path(Vertex(i), Vertex(j))
+
+			for _, p := range shortestPath {
+				if p == v {
+					weight++
+				}
+			}
+		}
+	}
+
+	return weight
+}
+
+func (g Graph) ConnectivitySequence() []uint8 {
+	weights := make([]uint8, g.Size)
+
+	for i := range weights {
+		weights[i] = g.ConnectivityWeight(Vertex(i))
+	}
+
+	sort.Slice(weights, func(i, j int) bool { return weights[i] > weights[j] })
+
+	return weights
 }

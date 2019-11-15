@@ -104,3 +104,90 @@ func TestVerticesConnected(t *testing.T) {
 		}
 	}
 }
+
+func TestPath(t *testing.T) {
+	edges := []graph.Edge{
+		{0, 1},
+		{0, 2},
+		{0, 3},
+		{1, 3},
+		{1, 2},
+		{2, 4},
+	}
+
+	g := graph.NewGraph(6)
+	g = g.AddEdges(edges)
+
+	a := graph.Vertex(0)
+	b := graph.Vertex(4)
+
+	expected := []graph.Vertex{0, 2, 4}
+	received := g.Path(a, b)
+
+	for i := range received {
+		if received[i] != expected[i] {
+			t.Errorf("Path: for the vertices %v and %v, expected path %v, received %v", a, b, expected, received)
+			break
+		}
+	}
+
+	expected = []graph.Vertex{}
+	a = 0
+	b = 5
+	received = g.Path(a, b)
+
+	for i := range received {
+		if received[i] != expected[i] {
+			t.Errorf("Path: for the vertices %v and %v, expected path %v, received %v", a, b, expected, received)
+			break
+		}
+	}
+}
+
+func TestConnectivityWeight(t *testing.T) {
+	edges := []graph.Edge{
+		{0, 2},
+		{1, 2},
+		{2, 3},
+		{2, 4},
+		{4, 5},
+	}
+
+	g := graph.NewGraph(6)
+	g = g.AddEdges(edges)
+
+	expected := []uint8{1, 1, 4, 1, 2, 1}
+	received := make([]uint8, g.Size)
+
+	for i := range received {
+		received[i] = g.ConnectivityWeight(graph.Vertex(i))
+	}
+
+	for i := range received {
+		if received[i] != expected[i] {
+			t.Errorf("ConnectivityWeight: for the vertices %v, expected %v, received %v", i, expected[i], received[i])
+		}
+	}
+}
+
+func TestConnectivitySequence(t *testing.T) {
+	edges := []graph.Edge{
+		{0, 2},
+		{1, 2},
+		{2, 3},
+		{2, 4},
+		{4, 5},
+	}
+
+	g := graph.NewGraph(7)
+	g = g.AddEdges(edges)
+
+	expected := []uint8{4, 2, 1, 1, 1, 1, 0}
+	received := g.ConnectivitySequence()
+
+	for i := range received {
+		if received[i] != expected[i] {
+			t.Errorf("ConnectivitySequence: expected %v, received %v", expected, received)
+		}
+	}
+}
