@@ -199,6 +199,7 @@ func (g Graph) Complement() Graph {
 	return Graph{g.Size, comp_adj}
 }
 
+//TODO: account for multiple shortest paths
 func (g Graph) ConnectivityWeight(v Vertex) uint8 {
 	weight := uint8(0)
 
